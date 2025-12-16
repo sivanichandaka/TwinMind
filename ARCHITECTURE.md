@@ -295,20 +295,20 @@ def rrf_score(rank, k=60):
 TwinMind/
 ├── backend/
 │   ├── __init__.py
-│   ├── main.py              # FastAPI endpoints
-│   ├── database.py          # PostgreSQL connection
-│   ├── ingestion.py         # Multimodal document processing
-│   ├── rag.py               # Retrieval + generation logic
+│   ├── main.py                       # FastAPI endpoints
+│   ├── database.py                   # PostgreSQL connection
+│   ├── ingestion.py                  # Multimodal document processing
+│   ├── rag.py                        # Retrieval + generation logic
 │   ├── requirements.txt
 │   └── static/
-│       └── index.html       # Frontend SPA
+│       └── index.html                # Frontend SPA
 ├── data/
-│   ├── DESIGN.md            # Detailed system design
-│   └── INTERVIEW_QA.md      # 60 technical Q&A
-├── docker-compose.yml       # Service orchestration
-├── Dockerfile               # Backend container
-├── ARCHITECTURE.md          # This document
-└── README.md                # Quick start
+│   ├── DESIGN.md                     # Detailed system design
+│   └── initial_knowledge.txt
+├── docker-compose.yml                # Service orchestration
+├── Dockerfile                        # Backend container
+├── ARCHITECTURE.md                   # This document
+└── README.md                         # Quick start
 ```
 
 ---
