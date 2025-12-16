@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second Brain</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #212121;
+            color: #ececec;
+            height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #171717;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #2f2f2f;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #2f2f2f;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #10a37f, #1a7f64);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-tabs {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-tab {
+            padding: 12px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #b4b4b4;
+            transition: background 0.15s;
+        }
+
+        .nav-tab:hover {
+            background: #2f2f2f;
+        }
+
+        .nav-tab.active {
+            background: #2f2f2f;
+            color: #fff;
+        }
+
+        .nav-tab svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.7;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px;
+            border-top: 1px solid #2f2f2f;
+            font-size: 12px;
+            color: #6b6b6b;
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .panel.active {
+            display: flex;
+        }
+
+        /* Chat Panel */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 0;
+        }
+
+        .message-row {
+            padding: 24px 0;
+        }
+
+        .message-row.ai {
+            background: #2f2f2f;
+        }
+
+        .message-content {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .avatar.ai {
+            background: linear-gradient(135deg, #10a37f, #1a7f64);
+            color: white;
+        }
+
+        .avatar.user {
+            background: #5436da;
+            color: white;
+        }
+
+        .message-text {
+            flex: 1;
+            line-height: 1.7;
+            padding-top: 4px;
+        }
+
+        .message-text p {
+            margin-bottom: 12px;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-text ul,
+        .message-text ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .message-text li {
+            margin-bottom: 6px;
+        }
+
+        .message-text pre {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .message-text code {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .message-text :not(pre)>code {
+            background: #3a3a3a;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 24px;
+            background: #212121;
+        }
+
+        .input-wrapper {
+            max-width: 768px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 16px 52px 16px 20px;
+            background: #40414f;
+            border: 1px solid #565869;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .input-box:focus {
+            border-color: #10a37f;
+        }
+
+        .input-box::placeholder {
+            color: #8e8ea0;
+        }
+
+        .input-box:disabled {
+            opacity: 0.6;
+        }
+
+        .send-button {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 32px;
+            height: 32px;
+            background: #10a37f;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+
+        .send-button:hover {
+            background: #1a7f64;
+        }
+
+        .send-button:disabled {
+            background: #565869;
+            cursor: not-allowed;
+        }
+
+        .send-button svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        .stop-button {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 32px;
+            height: 32px;
+            background: #ef4444;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stop-button svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        .input-hint {
+            text-align: center;
+            font-size: 12px;
+            color: #6b6b6b;
+            margin-top: 12px;
+        }
+
+        /* Upload Panel */
+        .upload-panel {
+            padding: 48px 24px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .upload-desc {
+            color: #8e8ea0;
+            margin-bottom: 32px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #565869;
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: #10a37f;
+            background: rgba(16, 163, 127, 0.05);
+        }
+
+        .drop-zone-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            opacity: 0.5;
+        }
+
+        .drop-zone-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .drop-zone-hint {
+            font-size: 14px;
+            color: #6b6b6b;
+        }
+
+        .browse-btn {
+            margin-top: 16px;
+            padding: 10px 24px;
+            background: #10a37f;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .browse-btn:hover {
+            background: #1a7f64;
+        }
+
+        .upload-list {
+            margin-top: 24px;
+        }
+
+        .upload-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #2f2f2f;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .upload-status {
+            font-size: 14px;
+        }
+
+        .upload-status.success {
+            color: #10a37f;
+        }
+
+        .upload-status.error {
+            color: #ef4444;
+        }
+
+        .upload-status.pending {
+            color: #f59e0b;
+        }
+
+        /* Model Panel */
+        .model-panel {
+            padding: 48px 24px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .model-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .model-desc {
+            color: #8e8ea0;
+            margin-bottom: 32px;
+        }
+
+        .model-option {
+            background: #2f2f2f;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .model-option:hover {
+            background: #3a3a3a;
+        }
+
+        .model-option.selected {
+            border-color: #10a37f;
+        }
+
+        .model-option-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .model-radio {
+            width: 20px;
+            height: 20px;
+            accent-color: #10a37f;
+        }
+
+        .model-name {
+            font-weight: 600;
+        }
+
+        .model-hint {
+            font-size: 14px;
+            color: #8e8ea0;
+            margin-left: 32px;
+            margin-top: 4px;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #40414f;
+            border: 1px solid #565869;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            margin-top: 16px;
+            margin-left: 32px;
+            width: calc(100% - 32px);
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #10a37f;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 14px;
+            background: #10a37f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 24px;
+        }
+
+        .save-btn:hover {
+            background: #1a7f64;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                Second Brain
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <div class="nav-tab active" data-panel="chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                Chat
+            </div>
+            <div class="nav-tab" data-panel="upload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                Upload
+            </div>
+            <div class="nav-tab" data-panel="model">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Settings
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            v1.0 • Local + Cloud
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Chat Panel -->
+        <div id="chatPanel" class="panel active">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message-row ai">
+                    <div class="message-content">
+                        <div class="avatar ai">AI</div>
+                        <div class="message-text">
+                            <p><strong>Welcome to Second Brain!</strong></p>
+                            <p>I'm your personal knowledge assistant. Ask me anything about your documents, and I'll
+                                search through your knowledge base to find relevant information.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea id="userInput" class="input-box" rows="1" placeholder="Message Second Brain..."
+                        autocomplete="off"></textarea>
+                    <button id="sendBtn" class="send-button">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
+                    </button>
+                    <button id="stopBtn" class="stop-button" style="display: none;">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="6" y="6" width="12" height="12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-hint">Second Brain uses hybrid search (semantic + keyword) for accurate answers</div>
+            </div>
+        </div>
+
+        <!-- Upload Panel -->
+        <div id="uploadPanel" class="panel upload-panel">
+            <h2 class="upload-title">Upload Documents</h2>
+            <p class="upload-desc">Add files to your knowledge base. Supports text, PDF, audio, and images.</p>
+
+            <div class="drop-zone" id="dropZone">
+                <svg class="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                <div class="drop-zone-text">Drag and drop files here</div>
+                <div class="drop-zone-hint">or</div>
+                <button class="browse-btn" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+            </div>
+            <input type="file" id="fileInput" multiple accept=".txt,.md,.pdf,.mp3,.m4a,.wav,.png,.jpg,.jpeg"
+                style="display: none;">
+
+            <div class="upload-list" id="uploadList"></div>
+
+            <h3 style="margin-top: 32px; margin-bottom: 16px; font-size: 18px;">Ingested Documents</h3>
+            <div id="docsList" style="background: #2f2f2f; border-radius: 8px; overflow: hidden;">
+                <div style="padding: 16px; color: #6b6b6b; text-align: center;">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Model Panel -->
+        <div id="modelPanel" class="panel model-panel">
+            <h2 class="model-title">Model Settings</h2>
+            <p class="model-desc">Choose your preferred AI model.</p>
+
+            <div class="model-option selected" data-model="ollama">
+                <div class="model-option-header">
+                    <input type="radio" name="model" value="ollama" class="model-radio" checked>
+                    <span class="model-name">Ollama (Local)</span>
+                </div>
+                <div class="model-hint">Runs locally on your GPU. Private and fast.</div>
+            </div>
+
+            <div class="model-option" data-model="gemini">
+                <div class="model-option-header">
+                    <input type="radio" name="model" value="gemini" class="model-radio">
+                    <span class="model-name">Google Gemini</span>
+                </div>
+                <div class="model-hint">Cloud-based. Requires API key.</div>
+                <input type="password" id="geminiKey" class="api-key-input" placeholder="Enter Gemini API key..."
+                    style="display: none;">
+            </div>
+
+            <button class="save-btn" id="saveBtn">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        marked.setOptions({
+            highlight: (code, lang) => {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        // Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const panels = {
+            chat: document.getElementById('chatPanel'),
+            upload: document.getElementById('uploadPanel'),
+            model: document.getElementById('modelPanel')
+        };
+
+        let abortController = null;
+
+        // Navigation
+        navTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                navTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                Object.values(panels).forEach(p => p.classList.remove('active'));
+                panels[tab.dataset.panel].classList.add('active');
+            });
+        });
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', () => {
+            userInput.style.height = 'auto';
+            userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
+        });
+
+        // Send message
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text || userInput.disabled) return;
+
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            userInput.disabled = true;
+            sendBtn.style.display = 'none';
+            stopBtn.style.display = 'flex';
+
+            addMessage('user', text);
+            const aiMessage = addMessage('ai', '');
+
+            abortController = new AbortController();
+            let response = '';
+
+            try {
+                const modelConfig = getModelConfig();
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        model: modelConfig.provider,
+                        api_key: modelConfig.apiKey
+                    }),
+                    signal: abortController.signal
+                });
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    response += decoder.decode(value);
+                    aiMessage.innerHTML = marked.parse(response);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    response += '\n\n*Generation stopped*';
+                } else {
+                    response = '**Error:** ' + e.message;
+                }
+                aiMessage.innerHTML = marked.parse(response);
+            } finally {
+                userInput.disabled = false;
+                userInput.focus();
+                sendBtn.style.display = 'flex';
+                stopBtn.style.display = 'none';
+                abortController = null;
+            }
+        }
+
+        function addMessage(role, text) {
+            const row = document.createElement('div');
+            row.className = `message-row ${role}`;
+            row.innerHTML = `
+                <div class="message-content">
+                    <div class="avatar ${role}">${role === 'ai' ? 'AI' : 'U'}</div>
+                    <div class="message-text">${text ? marked.parse(text) : ''}</div>
+                </div>
+            `;
+            chatMessages.appendChild(row);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return row.querySelector('.message-text');
+        }
+
+        function getModelConfig() {
+            const selected = document.querySelector('input[name="model"]:checked').value;
+            return {
+                provider: selected,
+                apiKey: selected === 'gemini' ? document.getElementById('geminiKey').value : null
+            };
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        stopBtn.addEventListener('click', () => abortController?.abort());
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // File upload
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadList = document.getElementById('uploadList');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        async function handleFiles(files) {
+            for (const file of files) {
+                const item = document.createElement('div');
+                item.className = 'upload-item';
+                item.innerHTML = `<span>${file.name}</span><span class="upload-status pending">Uploading...</span>`;
+                uploadList.appendChild(item);
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const res = await fetch('/upload', { method: 'POST', body: formData });
+
+                    if (res.ok) {
+                        item.querySelector('.upload-status').textContent = '✓ Done';
+                        item.querySelector('.upload-status').className = 'upload-status success';
+                        loadDocuments(); // Refresh list
+                    } else {
+                        throw new Error();
+                    }
+                } catch {
+                    item.querySelector('.upload-status').textContent = '✗ Failed';
+                    item.querySelector('.upload-status').className = 'upload-status error';
+                }
+            }
+        }
+
+        // Model selection
+        const modelOptions = document.querySelectorAll('.model-option');
+        const geminiKeyInput = document.getElementById('geminiKey');
+
+        modelOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                modelOptions.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                opt.querySelector('input').checked = true;
+                geminiKeyInput.style.display = opt.dataset.model === 'gemini' ? 'block' : 'none';
+            });
+        });
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            localStorage.setItem('modelConfig', JSON.stringify(getModelConfig()));
+            alert('Settings saved!');
+        });
+
+        // Load saved config
+        const saved = localStorage.getItem('modelConfig');
+        if (saved) {
+            const config = JSON.parse(saved);
+            const opt = document.querySelector(`.model-option[data-model="${config.provider}"]`);
+            if (opt) {
+                opt.click();
+                if (config.apiKey) geminiKeyInput.value = config.apiKey;
+            }
+        }
+
+        // Load documents list
+        async function loadDocuments() {
+            const docsList = document.getElementById('docsList');
+            try {
+                const res = await fetch('/documents');
+                const docs = await res.json();
+
+                if (docs.length === 0) {
+                    docsList.innerHTML = '<div style="padding: 16px; color: #6b6b6b; text-align: center;">No documents ingested yet</div>';
+                    return;
+                }
+
+                docsList.innerHTML = docs.map(doc => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #3a3a3a;">
+                        <div>
+                            <div style="font-weight: 500;">${doc.title}</div>
+                            <div style="font-size: 12px; color: #6b6b6b; margin-top: 2px;">${doc.chunks} chunks • ${doc.source || 'unknown'}</div>
+                        </div>
+                        <div style="font-size: 12px; color: #6b6b6b;">${doc.created_at ? new Date(doc.created_at).toLocaleDateString() : ''}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                docsList.innerHTML = '<div style="padding: 16px; color: #ef4444; text-align: center;">Failed to load documents</div>';
+            }
+        }
+
+        // Load docs on page load
+        loadDocuments();
+    </script>
+</body>
+
+</html>
