@@ -308,6 +308,7 @@ TwinMind/
 ├── docker-compose.yml                # Service orchestration
 ├── Dockerfile                        # Backend container
 ├── ARCHITECTURE.md                   # This document
+├── run_ingestion.py                  # Batch ingest local files
 └── README.md                         # Quick start
 ```
 
