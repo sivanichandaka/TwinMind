@@ -1,22 +1,110 @@
-# Second Brain PoC Walkthrough
+# 🧠 Second Brain
 
-## Overview
-We built a Local-First "Second Brain" Proof of Concept using:
-- **FastAPI**: Backend API and Static File Server.
-- **PostgreSQL + pgvector**: Vector database (via Docker).
-- **SentenceTransformers**: Local text embeddings (`all-MiniLM-L6-v2`).
-- **Ollama**: Local LLM for generation.
-- **Vanilla JS/HTML**: Clean, dark-mode frontend.
+```
+    ╔═══════════════════════════════════════════╗
+    ║                                           ║
+    ║   ┌─────────────────────────────────┐     ║
+    ║   │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │     ║
+    ║   │  ░  YOUR KNOWLEDGE  ░░░░░░░░░░ │     ║
+    ║   │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │     ║
+    ║   │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │     ║
+    ║   │  ░░░░ ALWAYS REMEMBERED ░░░░░ │     ║
+    ║   │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │     ║
+    ║   └─────────────────────────────────┘     ║
+    ║              🤖 AI Assistant              ║
+    ╚═══════════════════════════════════════════╝
+```
 
-## How to Run automatically
-1. Ensure Docker is running.
-2. Run `docker-compose up -d --build`.
-3. Open `http://localhost:8000/` in your browser.
+> *Your personal AI that remembers everything you teach it.*
 
-*Note: The entire stack (Backend, DB, Ollama) runs in Docker.*
-*To reset data: `docker exec twinmind-backend python run_ingestion.py`*
+---
 
-## Features
-- **Chat**: Streamed responses from your local LLM.
-- **RAG**: Retrives relevant chunks from the "Second Brain Architecture" document.
-- **Local-First**: No data leaves your machine (except purely local Docker/Ollama calls).
+## ✨ What is this?
+
+A **privacy-first** knowledge assistant that:
+
+- 📄 Ingests your **PDFs, audio, images, and text**
+- 🔍 Finds answers using **hybrid search** (meaning + keywords)
+- 🤖 Answers questions with a **local LLM** (your data stays on your machine!)
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# 1. Start everything
+docker-compose up -d
+
+# 2. Wait for the AI model to download (~5 min first time)
+docker logs -f twinmind-ollama
+
+# 3. Open your browser
+open http://localhost:8000
+```
+
+That's it! 🎉
+
+---
+
+## 📁 What can I upload?
+
+| Format | How it works |
+|--------|--------------|
+| 📄 PDF | Text extraction |
+| 🎤 Audio | Whisper transcription |
+| 🖼️ Images | OCR (Tesseract) |
+| 📝 Text/Markdown | Direct ingestion |
+
+---
+
+## 🛠️ Tech Stack
+
+```
+┌─────────────────────────────────────────┐
+│  Frontend    │  HTML + Vanilla JS       │
+├──────────────┼──────────────────────────┤
+│  Backend     │  FastAPI (Python)        │
+├──────────────┼──────────────────────────┤
+│  Database    │  PostgreSQL + pgvector   │
+├──────────────┼──────────────────────────┤
+│  LLM         │  Ollama (llama3)         │
+├──────────────┼──────────────────────────┤
+│  Audio       │  OpenAI Whisper          │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 🔒 Privacy
+
+Your data **never leaves your computer**. Everything runs locally in Docker containers.
+
+---
+
+## 📖 More Docs
+
+- [Architecture](ARCHITECTURE.md) — System design details
+- [Design Doc](data/DESIGN.md) — Deep dive into components
+
+---
+
+## 💡 Example Queries
+
+```
+"What did I save about project management?"
+"Find my notes from last week"
+"Summarize the PDF I uploaded"
+```
+
+---
+
+Made with ❤️ and ☕
+
+```
+   ( (
+    ) )
+  ........
+  |      |]
+  \      /
+   `----'
+```
