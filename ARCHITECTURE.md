@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-**TwinMind** is a **privacy-first, AI-powered Second Brain** that ingests personal knowledge (documents, audio, images) and provides intelligent conversational retrieval. It runs **locally** with optional cloud LLM support, using a containerized architecture that combines:
+**Second Brain** is a **privacy-first, AI-powered personal assistant** that ingests personal knowledge (documents, audio, images) and provides intelligent conversational retrieval. It runs **locally** with optional cloud LLM support, using a containerized architecture that combines:
 
 - **Hybrid search** (semantic vectors + BM25 keywords)
 - **Multimodal ingestion** (PDF, audio, images, text)
