@@ -269,25 +269,59 @@ async def generate_response(query: str, model: str = "ollama", api_key: Optional
     vector_results = await search_similar_chunks(query, limit=10, start_date=start_date, end_date=end_date)
     keyword_results = await keyword_search(query, limit=10)
     
+    # Debug logging
+    print(f"\n{'='*60}")
+    print(f"[RAG] Query: {query}")
+    print(f"[RAG] Vector results: {len(vector_results)}")
+    for i, r in enumerate(vector_results[:3]):
+        print(f"  [{i+1}] dist={r.get('distance', 'N/A'):.4f}: {r['content'][:80]}...")
+    print(f"[RAG] Keyword results: {len(keyword_results)}")
+    for i, r in enumerate(keyword_results[:3]):
+        print(f"  [{i+1}] rank={r.get('rank', 'N/A')}: {r['content'][:80]}...")
+    
     # Combine results using Reciprocal Rank Fusion
     hybrid_results = reciprocal_rank_fusion(vector_results, keyword_results)
     
-    # Build context from top 5 results
-    context_text = "\n\n".join([result['content'] for result in hybrid_results[:5]])
+    print(f"[RAG] Hybrid results: {len(hybrid_results)}")
+    for i, r in enumerate(hybrid_results[:5]):
+        print(f"  [{i+1}] score={r['score']:.4f}: {r['content'][:80]}...")
+    print(f"{'='*60}\n")
+    
+    # Build context from top 5 results, but limit each chunk to 1000 chars
+    MAX_CHUNK_SIZE = 1000
+    MAX_TOTAL_CONTEXT = 4000
+    
+    context_parts = []
+    total_len = 0
+    for result in hybrid_results[:5]:
+        chunk = result['content'][:MAX_CHUNK_SIZE]  # Truncate large chunks
+        if total_len + len(chunk) > MAX_TOTAL_CONTEXT:
+            break  # Stop if we'd exceed max context
+        context_parts.append(chunk)
+        total_len += len(chunk)
+    
+    context_text = "\n\n---\n\n".join(context_parts)
+    
+    # Log the context being sent
+    print(f"[RAG] Context being sent to LLM ({len(context_text)} chars):")
+    print(context_text[:500])
+    print("..." if len(context_text) > 500 else "")
     
     # Construct the system prompt with retrieved context
-    system_prompt = f"""You are a helpful Second Brain assistant. 
-    Use the following context to answer the user's question.
-    
-    Context:
-    {context_text}
-    
-    Instructions:
-    - If the user greets you (e.g., "Hi", "Hello"), respond politely and introduce yourself as their Second Brain.
-    - If the answer is found in the context, use it.
-    - If the answer is NOT in the context but is a general question, you may answer generally but mention you are using general knowledge.
-    - Be concise.
-    """
+    system_prompt = f"""You are a helpful Second Brain assistant. Your job is to answer questions based on the user's personal knowledge base.
+
+IMPORTANT: Read the context below carefully. The answer is likely contained within it.
+
+=== CONTEXT FROM KNOWLEDGE BASE ===
+{context_text}
+=== END CONTEXT ===
+
+Instructions:
+1. ALWAYS check the context above first before saying information is not available.
+2. If you find relevant information in the context, use it to answer the question.
+3. Quote or paraphrase directly from the context when possible.
+4. Only say "no information found" if you have thoroughly checked the context and it truly doesn't contain the answer.
+5. Be concise and helpful."""
     
     logging.info(f"Using model: {model}")
     
@@ -358,12 +392,18 @@ async def generate_ollama_response(system_prompt: str, query: str):
     """
     logging.info(f"Sending request to Ollama ({OLLAMA_API_URL})...")
     
+    # Log prompt length for debugging
+    print(f"[OLLAMA] System prompt length: {len(system_prompt)} chars")
+    print(f"[OLLAMA] Query: {query}")
+    
     try:
         async with httpx.AsyncClient() as client:
             # Stream the response from Ollama
+            # Use separate system parameter for better context handling
             async with client.stream("POST", OLLAMA_API_URL, json={
                 "model": MODEL_NAME,
-                "prompt": f"{system_prompt}\n\nUser: {query}\nAssistant:",
+                "system": system_prompt,
+                "prompt": query,
                 "stream": True
             }, timeout=300.0) as response:
                 

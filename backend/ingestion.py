@@ -92,12 +92,16 @@ def recursive_chunking(text: str, chunk_size: int = 500, overlap: int = 50) -> l
             current_chunk += para + "\n\n"
         else:
             # Save current chunk and start a new one
-            chunks.append(current_chunk.strip())
+            if current_chunk.strip():  # Only add non-empty chunks
+                chunks.append(current_chunk.strip())
             current_chunk = para + "\n\n"
             
     # Don't forget the last chunk
-    if current_chunk:
+    if current_chunk.strip():  # Only add non-empty chunks
         chunks.append(current_chunk.strip())
+    
+    # Filter out any empty or very short chunks
+    chunks = [c for c in chunks if len(c) > 10]
         
     return chunks
 
@@ -256,11 +260,27 @@ def read_audio(file_path: str) -> str:
         GPU acceleration available if CUDA is configured.
     """
     try:
+        print(f"[WHISPER] Starting transcription for: {file_path}")
         model = get_whisper_model()
         result = model.transcribe(file_path)
-        return result["text"]
+        transcript = result["text"]
+        
+        # Log the transcript to console
+        print("=" * 60)
+        print("[WHISPER] TRANSCRIPTION COMPLETE")
+        print("=" * 60)
+        print(f"[WHISPER] File: {file_path}")
+        print(f"[WHISPER] Length: {len(transcript)} characters")
+        print("-" * 60)
+        print("[WHISPER] TRANSCRIPT:")
+        print(transcript)
+        print("=" * 60)
+        
+        return transcript
     except Exception as e:
-        print(f"Error transcribing audio {file_path}: {e}")
+        print(f"[WHISPER] ERROR transcribing audio {file_path}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 

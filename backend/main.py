@@ -169,6 +169,9 @@ async def upload_document(file: UploadFile = File(...)):
         elif filename_lower.endswith(('.mp3', '.m4a', '.wav')):
             # Audio files - transcribe using Whisper
             content = read_audio(tmp_path)
+            if content:
+                # Prefix with audio source tag for identification
+                content = f"[AUDIO TRANSCRIPT: {file.filename}]\n\n{content}"
             
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
@@ -177,8 +180,13 @@ async def upload_document(file: UploadFile = File(...)):
         if not content:
             raise HTTPException(status_code=500, detail="Failed to extract content")
         
+        # Log what we're ingesting
+        print(f"[UPLOAD] Ingesting '{file.filename}' with {len(content)} characters")
+        
         # Ingest the document into the knowledge base
         doc_id, chunks_count = await ingest_document(file.filename, content, source="upload")
+        
+        print(f"[UPLOAD] Successfully ingested doc_id={doc_id} with {chunks_count} chunks")
         
         return {
             "status": "success", 
